@@ -172,7 +172,7 @@ dialog .actions .spacer{flex:1}
     <label for="me">Je suis</label>
     <select id="me"><option value="">—</option></select>
     <span class="spacer"></span>
-    <button type="button" class="btn primary" id="addMatch">+ Match</button>
+    <button type="button" class="btn primary" id="addMatch" hidden>+ Match</button>
     <div class="seg" role="group" aria-label="Filtre">
       <button type="button" data-f="upcoming" aria-pressed="true">À venir</button>
       <button type="button" data-f="all" aria-pressed="false">Tous</button>
@@ -258,6 +258,9 @@ const $ = s => document.querySelector(s);
 const CFG = window.STONETROOPERS_CONFIG || {};
 $("#secVacances").hidden = CFG.AFFICHER_VACANCES !== true;
 $("#secEquipe").hidden = CFG.AFFICHER_EQUIPE !== true;
+// Joueurs autorisés à ajouter / modifier / supprimer des matchs (liste dans config.js)
+const EDITEURS = Array.isArray(CFG.EDITEURS) ? CFG.EDITEURS : ["Pascal"];
+const canEdit = () => !!me && EDITEURS.includes(me);
 const store = {
   get(k,d){ try{ const v=localStorage.getItem("st_"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
   set(k,v){ try{ localStorage.setItem("st_"+k, JSON.stringify(v)); }catch(e){} }
@@ -345,7 +348,7 @@ function render(){
           <span class="opp">vs ${esc(m.adversaire)}</span>
           ${isNext?'<span class="tag-next">Prochain match</span>':""}
           ${past&&!hasScore(m)?'<span class="tag-score">Score à saisir</span>':""}
-          <button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>
+          ${canEdit()?`<button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>`:""}
         </div>
         <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?" · "+esc(m.notes):""}</div>
         <div class="statusline">
@@ -359,6 +362,7 @@ function render(){
   }).join("");
 
   document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.f===filter)));
+  $("#addMatch").hidden = !canEdit();
   $("#hint").innerHTML = me
     ? `Clique sur tes cases <b>${esc(me)}</b> pour changer ta réponse : vide → Oui → Incertain → Non.`
     : `Choisis ton nom dans <b>Je suis</b> pour pouvoir modifier tes disponibilités.`;
@@ -449,6 +453,7 @@ function fillMe(){
 const dlg = $("#dlg"), mf = $("#matchForm");
 let editId = null;
 function openMatch(m){
+  if (!canEdit()) return;
   editId = m ? m.id : null;
   $("#dlgTitle").textContent = m ? "Modifier le match" : "Nouveau match";
   mf.date.value = m ? m.date : "";
