@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoneTroopers — Planning</title>
+<meta name="description" content="Matchs de curling et disponibilités de l'équipe StoneTroopers, saison 2026-27">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23d6e9f5'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%23c8323c'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%231d4e89'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f3f7fa; --surface:#ffffff; --surface-2:#eaf1f6; --ink:#15212b; --muted:#5d6b78;
+  --line:#d7e1e8; --accent:#1d4e89; --accent-ink:#ffffff; --house:#c8323c;
+  --ok:#1f7a4d; --ok-bg:#dff3e8; --warn:#8a5a00; --warn-bg:#fff1cc;
+  --bad:#a52a2a; --bad-bg:#fbe1df; --plus:#9a4a00; --plus-bg:#ffe5cc;
+  --unk:#7a5a00; --unk-bg:#fff6d6; --no:#6b7680; --no-bg:#eceff2; --vac-bg:#d3d8dd;
+  --shadow:0 1px 2px rgba(20,40,60,.06),0 4px 16px rgba(20,40,60,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e161d; --surface:#16212b; --surface-2:#1d2a36; --ink:#e6eef4; --muted:#93a3b1;
+    --line:#2a3a48; --accent:#6aa7e8; --accent-ink:#0e161d; --house:#e2525b;
+    --ok:#6fd3a0; --ok-bg:#163a2a; --warn:#f2c35c; --warn-bg:#3a2f12;
+    --bad:#f08a80; --bad-bg:#3d1c1a; --plus:#f5a35c; --plus-bg:#3d2714;
+    --unk:#f2cf6a; --unk-bg:#3a3214; --no:#9aa6b1; --no-bg:#24313d; --vac-bg:#2f3a44;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e161d; --surface:#16212b; --surface-2:#1d2a36; --ink:#e6eef4; --muted:#93a3b1;
+  --line:#2a3a48; --accent:#6aa7e8; --accent-ink:#0e161d; --house:#e2525b;
+  --ok:#6fd3a0; --ok-bg:#163a2a; --warn:#f2c35c; --warn-bg:#3a2f12;
+  --bad:#f08a80; --bad-bg:#3d1c1a; --plus:#f5a35c; --plus-bg:#3d2714;
+  --unk:#f2cf6a; --unk-bg:#3a3214; --no:#9aa6b1; --no-bg:#24313d; --vac-bg:#2f3a44;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px 48px}
+header{padding:28px 0 18px;display:flex;gap:14px;align-items:center}
+.logo{width:46px;height:46px;flex:none}
+h1{font-size:24px;line-height:1.15;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.sync{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.toolbar label{font-size:13px;color:var(--muted)}
+select,.seg button{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;border-radius:0;cursor:pointer;background:transparent;padding:7px 12px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.spacer{flex:1}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:grid;grid-template-columns:64px 1fr;gap:14px;margin-bottom:10px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--st,transparent)}
+.card.past{opacity:.55}
+.card.next{border-color:var(--accent);border-width:2px;padding:13px}
+.datebox{text-align:center;border-radius:10px;background:var(--surface-2);padding:8px 0;align-self:start}
+.datebox .d{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.datebox .n{font-size:24px;font-weight:700;line-height:1.1}
+.datebox .m{font-size:12px;color:var(--muted)}
+.top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.opp{font-size:17px;font-weight:650}
+.meta{color:var(--muted);font-size:13px}
+.tag-next{font-size:11px;font-weight:600;background:var(--accent);color:var(--accent-ink);padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.statusline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}
+.badge{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:99px}
+.counts{font-size:12.5px;color:var(--muted)}
+.s-ok{--st:var(--ok)} .s-ok .badge{background:var(--ok-bg);color:var(--ok)}
+.s-warn{--st:var(--warn)} .s-warn .badge{background:var(--warn-bg);color:var(--warn)}
+.s-bad{--st:var(--bad)} .s-bad .badge{background:var(--bad-bg);color:var(--bad)}
+.s-plus{--st:var(--plus)} .s-plus .badge{background:var(--plus-bg);color:var(--plus)}
+.s-none{--st:var(--line)} .s-none .badge{background:var(--surface-2);color:var(--muted)}
+
+.players{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.chip{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 4px;text-align:center;min-width:0;transition:transform .08s}
+.chip .who{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .val{display:block;font-size:13.5px;font-weight:600}
+.chip.v-oui{background:var(--ok-bg);border-color:transparent}.chip.v-oui .val{color:var(--ok)}
+.chip.v-incertain{background:var(--unk-bg);border-color:transparent}.chip.v-incertain .val{color:var(--unk)}
+.chip.v-non{background:var(--no-bg);border-color:transparent}.chip.v-non .val{color:var(--no)}
+.chip.v-vide .val{color:var(--muted);font-weight:500}
+.chip.vac{background:var(--vac-bg)}
+.chip.vac .who::after{content:" 🏖"}
+.chip.me{outline:2px solid var(--accent);outline-offset:1px}
+
+h2{font-size:15px;margin:28px 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+.bar{height:6px;border-radius:3px;background:var(--surface-2);min-width:80px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.legend{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.legend span.badge{display:inline-block;min-width:118px;text-align:center;margin-right:8px}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+footer{margin-top:30px;font-size:12px;color:var(--muted);text-align:center}
+@media (max-width:560px){
+  header{flex-wrap:wrap}
+  .sync{margin-left:0;width:100%}
+  .card{grid-template-columns:1fr;gap:10px}
+  .datebox{display:flex;gap:8px;align-items:baseline;justify-content:flex-start;padding:6px 10px;background:none;text-align:left}
+  .datebox .n{font-size:18px}
+  .chip .who{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="23" fill="#d6e9f5"/><circle cx="24" cy="24" r="16" fill="#1d4e89"/>
+      <circle cx="24" cy="24" r="11" fill="#fff"/><circle cx="24" cy="24" r="6" fill="#c8323c"/>
+      <circle cx="24" cy="24" r="2" fill="#fff"/>
+    </svg>
+    <div>
+      <h1>Les StoneTroopers</h1>
+      <div class="sub">Planning de présence · saison 2026-27</div>
+    </div>
+    <div class="sync" id="maj"></div>
+  </header>
+
+
+  <div class="toolbar">
+    <label for="me">Je suis</label>
+    <select id="me"><option value="">—</option></select>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="Filtre">
+      <button type="button" data-f="upcoming" aria-pressed="true">À venir</button>
+      <button type="button" data-f="all" aria-pressed="false">Tous</button>
+    </div>
+  </div>
+
+  <main id="list"></main>
+
+  <h2>Présences confirmées (matchs à venir)</h2>
+  <div class="tablewrap"><table id="stats"></table></div>
+
+  <h2>Légende</h2>
+  <div class="legend">
+    <div><span class="badge" style="background:var(--ok-bg);color:var(--ok)">✓ Complet</span>4 joueurs confirmés</div>
+    <div><span class="badge" style="background:var(--warn-bg);color:var(--warn)">▲ Jouable / ❓</span>3 confirmés, ou 3 possibles en comptant les « Incertain »</div>
+    <div><span class="badge" style="background:var(--bad-bg);color:var(--bad)">⚠ Incomplet</span>même avec les incertains, moins de 3 joueurs</div>
+    <div><span class="badge" style="background:var(--plus-bg);color:var(--plus)">➕ Surplus</span>les 5 ont confirmé : il faudra tourner</div>
+    <div><span class="badge" style="background:var(--vac-bg);color:var(--ink)">🏖 En congé</span>joueur en vacances à cette date</div>
+  </div>
+
+  <footer id="foot">StoneTroopers</footer>
+</div>
+<script src="data.js"></script>
+
+<script>
+(function(){
+"use strict";
+const PLAYERS = ["Suettania","Adélie","Océane","Jean-Pierre","Pascal"];
+
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem("st_"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem("st_"+k, JSON.stringify(v)); }catch(e){} }
+};
+let state = { matches:[], vacances:[] };
+let filter = store.get("filter","upcoming");
+let me = store.get("me","");
+
+function norm(v){
+  v = String(v==null?"":v).trim().toLowerCase();
+  if (v==="oui") return "Oui";
+  if (v==="non") return "Non";
+  if (v.startsWith("incert")) return "Incertain";
+  return "";
+}
+function parseDate(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function today(){ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); }
+const fmtDay = new Intl.DateTimeFormat("fr-FR",{weekday:"short"});
+const fmtMon = new Intl.DateTimeFormat("fr-FR",{month:"short"});
+const fmtLong = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+
+function onVacation(player, dateStr){
+  const d = parseDate(dateStr);
+  return state.vacances.some(v => v.joueur===player && v.debut && v.fin && d>=parseDate(v.debut) && d<=parseDate(v.fin));
+}
+function status(m){
+  const vals = PLAYERS.map(p=>m.dispo[p]||"");
+  const yes = vals.filter(v=>v==="Oui").length;
+  const pot = yes + vals.filter(v=>v==="Incertain").length;
+  const any = vals.some(v=>v);
+  let cls="s-none", label="En attente";
+  if (any){
+    if (yes>=5){cls="s-plus";label="➕ Surplus (5)";}
+    else if (yes===4){cls="s-ok";label="✓ Complet (4)";}
+    else if (yes===3){cls="s-warn";label="▲ Jouable (3)";}
+    else if (pot>=3){cls="s-warn";label="❓ À confirmer";}
+    else {cls="s-bad";label="⚠ Incomplet";}
+  }
+  return {cls,label,yes,pot};
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function render(){
+  const t = today();
+  const sorted = [...state.matches].sort((a,b)=>a.date.localeCompare(b.date));
+  const nextM = sorted.find(m=>parseDate(m.date)>=t);
+  const shown = filter==="all" ? sorted : sorted.filter(m=>parseDate(m.date)>=t);
+  const list = $("#list");
+  if (!shown.length){ list.innerHTML = '<div class="empty">Aucun match à venir.</div>'; }
+  else list.innerHTML = shown.map(m=>{
+    const d = parseDate(m.date), past = d<t, st = status(m), isNext = nextM===m;
+    const chips = PLAYERS.map(p=>{
+      const v = m.dispo[p]||"", vac = onVacation(p,m.date);
+      const cls = ["chip","v-"+(v?v.toLowerCase():"vide"), vac?"vac":"", me===p?"me":""].join(" ");
+      return `<div class="${cls}"
+        aria-label="${esc(p)} : ${v||"pas de réponse"}${vac?" (en congé)":""}">
+        <span class="who">${esc(p)}</span><span class="val">${v||"—"}</span></div>`;
+    }).join("");
+    const vacList = PLAYERS.filter(p=>onVacation(p,m.date));
+    return `<article class="card ${st.cls} ${past?"past":""} ${isNext?"next":""}">
+      <div class="datebox"><div class="d">${fmtDay.format(d)}</div><div class="n">${d.getDate()}</div><div class="m">${fmtMon.format(d)}</div></div>
+      <div>
+        <div class="top">
+          <span class="opp">vs ${esc(m.adversaire)}</span>
+          ${isNext?'<span class="tag-next">Prochain match</span>':""}
+        </div>
+        <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}</div>
+        <div class="statusline">
+          <span class="badge">${st.label}</span>
+          <span class="counts">${st.yes} confirmé${st.yes>1?"s":""} · ${st.pot} potentiel${st.pot>1?"s":""}${vacList.length?" · En congé : "+vacList.map(esc).join(", "):""}</span>
+        </div>
+        <div class="players">${chips}</div>
+      </div>
+    </article>`;
+  }).join("");
+
+  // Stats
+  const up = sorted.filter(m=>parseDate(m.date)>=t);
+  const rows = PLAYERS.map(p=>{
+    const y = up.filter(m=>m.dispo[p]==="Oui").length;
+    const u = up.filter(m=>m.dispo[p]==="Incertain").length;
+    const pct = up.length? Math.round(100*y/up.length):0;
+    return `<tr><td>${esc(p)}</td><td class="num">${y} / ${up.length}</td><td class="num">${u}</td><td><div class="bar"><i style="width:${pct}%"></i></div></td></tr>`;
+  }).join("");
+  $("#stats").innerHTML = `<thead><tr><th>Joueur</th><th style="text-align:right">Oui</th><th style="text-align:right">Incertain</th><th>Taux</th></tr></thead><tbody>${rows}</tbody>`;
+
+  document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.f===filter)));
+}
+
+function applyData(data){
+  state.matches = (data.matches||[]).map((m,i)=>({...m, dispo:Object.fromEntries(PLAYERS.map(p=>[p,norm((m.dispo||{})[p])]))}));
+  state.vacances = data.vacances||[];
+}
+
+document.addEventListener("click", e=>{
+  const seg = e.target.closest(".seg button");
+  if (seg){ filter=seg.dataset.f; store.set("filter",filter); render(); }
+});
+
+const sel = $("#me");
+PLAYERS.forEach(p=>{ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
+sel.value = me;
+sel.addEventListener("change", ()=>{ me=sel.value; store.set("me",me); render(); });
+
+const DATA = window.PLANNING || {matches:[],vacances:[]};
+applyData(DATA);
+if (DATA.miseAJour){ const d=parseDate(DATA.miseAJour); $("#maj").textContent="Mis à jour le "+d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"}); }
+render();
+})();
+</script>
+</body>
+</html>
