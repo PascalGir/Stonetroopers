@@ -283,7 +283,7 @@ let busy = 0;
 async function refresh(){
   if (!API || busy) return;
   try{
-    const r = await fetch(API, {cache:"no-store"});
+    const r = await fetch(API + (API.includes("?")?"&":"?") + "t=" + Date.now(), {cache:"no-store"});
     const data = await r.json();
     if (data.error) throw new Error(data.error);
     if (busy) return;
