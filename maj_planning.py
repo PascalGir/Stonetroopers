@@ -27,12 +27,13 @@ def main(path):
     header = [c.value for c in ws[2]]
     cols = {name: header.index(name) for name in PLAYERS}
     matches = []
-    for r in ws.iter_rows(min_row=3, values_only=True):
+    for i, r in enumerate(ws.iter_rows(min_row=3, values_only=True), start=3):
         date = iso(r[0])
         if not date:
             continue
         heure = r[2].strftime("%H:%M") if isinstance(r[2], (dt.time, dt.datetime)) else str(r[2] or "")
         matches.append({
+            "row": i,
             "date": date,
             "heure": heure,
             "piste": r[3] or "",
