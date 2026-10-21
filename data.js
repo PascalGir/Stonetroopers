@@ -3,6 +3,7 @@ window.PLANNING = {
   "miseAJour": "2026-10-21",
   "matches": [
     {
+      "row": 3,
       "date": "2026-10-06",
       "heure": "18:00",
       "piste": "C",
@@ -16,6 +17,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 4,
       "date": "2026-10-22",
       "heure": "20:15",
       "piste": "A",
@@ -29,6 +31,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 5,
       "date": "2026-10-29",
       "heure": "20:15",
       "piste": "A",
@@ -42,6 +45,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 6,
       "date": "2026-11-05",
       "heure": "20:15",
       "piste": "A",
@@ -55,6 +59,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 7,
       "date": "2026-11-10",
       "heure": "20:15",
       "piste": "B",
@@ -68,6 +73,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 8,
       "date": "2026-11-18",
       "heure": "20:00",
       "piste": "C",
@@ -81,6 +87,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 9,
       "date": "2026-11-26",
       "heure": "20:15",
       "piste": "C",
@@ -94,6 +101,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 10,
       "date": "2026-12-01",
       "heure": "20:15",
       "piste": "B",
@@ -107,6 +115,7 @@ window.PLANNING = {
       }
     },
     {
+      "row": 11,
       "date": "2026-12-08",
       "heure": "20:15",
       "piste": "B",
