@@ -101,6 +101,7 @@ function action_(b) {
     case 'setDispo': return setDispo_(b);
     case 'addVacances': return addVacances_(b);
     case 'deleteVacances': return deleteVacances_(b);
+    case 'setScore': return setScore_(b);
     case 'saveMatch': capitaine_(b); return saveMatch_(b);
     case 'deleteMatch': capitaine_(b); return deleteMatch_(b);
     case 'savePlayer': capitaine_(b); return savePlayer_(b);
@@ -167,7 +168,31 @@ function addVacances_(b) {
   const d = function (s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
   sh.appendRow([id, b.joueur, d(b.debut), d(b.fin), String(b.commentaire || '')]);
   sh.getRange(sh.getLastRow(), 3, 1, 2).setNumberFormat('dd/mm/yyyy');
-  return { id: id };
+  // Réponse « Non » automatique sur les matchs pendant l'absence
+  const ms = feuille_(ONGLET_MATCHS);
+  const h = entetes_(ms);
+  const col = h.indexOf(b.joueur) + 1;
+  let n = 0;
+  if (col > COLS_MATCH.length && ms.getLastRow() >= 2) {
+    const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
+    const dates = ms.getRange(2, h.indexOf('Date') + 1, ms.getLastRow() - 1, 1).getValues();
+    dates.forEach(function (r, i) {
+      if (!(r[0] instanceof Date)) return;
+      const iso = Utilities.formatDate(r[0], tz, 'yyyy-MM-dd');
+      if (iso >= b.debut && iso <= b.fin) { ms.getRange(i + 2, col).setValue('Non'); n++; }
+    });
+  }
+  return { id: id, matchs: n };
+}
+
+function setScore_(b) {
+  const ok = function (v) { return v === '' || /^\d{1,2}$/.test(String(v)); };
+  if (!ok(b.scoreNous) || !ok(b.scoreEux)) throw new Error('score invalide');
+  const sh = feuille_(ONGLET_MATCHS);
+  const h = entetes_(sh);
+  const row = ligneParId_(sh, b.id);
+  sh.getRange(row, h.indexOf('Score nous') + 1).setValue(b.scoreNous === '' ? '' : Number(b.scoreNous));
+  sh.getRange(row, h.indexOf('Score eux') + 1).setValue(b.scoreEux === '' ? '' : Number(b.scoreEux));
 }
 
 function deleteVacances_(b) {
