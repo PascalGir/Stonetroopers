@@ -243,3 +243,60 @@ function heure_(s) {
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
+
+/* ---------- Installation (à lancer une seule fois depuis l'éditeur) ---------- */
+
+function installer() {
+  const ss = SpreadsheetApp.getActive();
+  const P = ['Suettania', 'Adélie', 'Océane', 'Jean-Pierre', 'Pascal'];
+  const M = [
+    ['M001', '2026-10-06', '18:00', 'C', 'On-Line', 'Non', 'Oui', 'Oui', 'Non', 'Oui'],
+    ['M002', '2026-10-22', '20:15', 'A', 'Tiguidou', 'Non', 'Non', 'Oui', 'Oui', 'Oui'],
+    ['M003', '2026-10-29', '20:15', 'A', 'The Rolling Stones', 'Oui', 'Oui', 'Oui', 'Oui', 'Non'],
+    ['M004', '2026-11-05', '20:15', 'A', 'Makushy', 'Oui', 'Non', 'Oui', 'Oui', 'Oui'],
+    ['M005', '2026-11-10', '20:15', 'B', 'Team CAPP', 'Oui', 'Oui', 'Oui', 'Oui', 'Oui'],
+    ['M006', '2026-11-18', '20:00', 'C', 'MADGIC', 'Oui', 'Non', 'Oui', 'Oui', 'Non'],
+    ['M007', '2026-11-26', '20:15', 'C', 'Millimetre', 'Oui', 'Oui', 'Non', 'Oui', 'Oui'],
+    ['M008', '2026-12-01', '20:15', 'B', 'In The House', 'Oui', 'Oui', 'Oui', 'Oui', 'Oui'],
+    ['M009', '2026-12-08', '20:15', 'B', 'Get Dolly', 'Oui', 'Oui', 'Oui', 'Oui', 'Oui']
+  ];
+  const onglet = function (nom) { return ss.getSheetByName(nom) || ss.insertSheet(nom); };
+  const entete = function (sh, h) {
+    sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold')
+      .setFontColor('#ffffff').setBackground('#1d4e89').setHorizontalAlignment('center');
+    sh.setFrozenRows(1);
+  };
+  const d = function (s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+
+  const m = onglet(ONGLET_MATCHS);
+  if (m.getLastRow() < 2) {
+    entete(m, COLS_MATCH.concat(P));
+    m.getRange(2, 3, 300, 1).setNumberFormat('@');
+    m.getRange(2, 2, 300, 1).setNumberFormat('dd/mm/yyyy');
+    m.getRange(2, 1, M.length, COLS_MATCH.length + P.length).setValues(M.map(function (r) {
+      return [r[0], d(r[1]), r[2], r[3], r[4], '', '', ''].concat(r.slice(5));
+    }));
+    const rep = SpreadsheetApp.newDataValidation().requireValueInList(['Oui', 'Incertain', 'Non'], true).setAllowInvalid(true).build();
+    m.getRange(2, COLS_MATCH.length + 1, 300, 15).setDataValidation(rep);
+    const zone = m.getRange(2, COLS_MATCH.length + 1, 300, 15);
+    m.setConditionalFormatRules([
+      SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Oui').setBackground('#dff3e8').setFontColor('#1f7a4d').setRanges([zone]).build(),
+      SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Incertain').setBackground('#fff6d6').setFontColor('#7a5a00').setRanges([zone]).build(),
+      SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Non').setBackground('#eceff2').setFontColor('#6b7680').setRanges([zone]).build()
+    ]);
+    m.setColumnWidth(5, 170);
+  }
+  const j = onglet(ONGLET_JOUEURS);
+  if (j.getLastRow() < 2) {
+    entete(j, ['Nom', 'Actif', 'Poste']);
+    j.getRange(2, 1, P.length, 3).setValues(P.map(function (p) { return [p, 'Oui', '']; }));
+  }
+  const v = onglet(ONGLET_VACANCES);
+  if (v.getLastRow() < 1) {
+    entete(v, ['ID', 'Joueur', 'Début', 'Fin', 'Commentaire']);
+    v.getRange(2, 3, 300, 2).setNumberFormat('dd/mm/yyyy');
+  }
+  const vide = ss.getSheetByName('Feuille 1') || ss.getSheetByName('Sheet1');
+  if (vide && vide.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(vide);
+  ss.setActiveSheet(m);
+}
