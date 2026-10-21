@@ -106,6 +106,43 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hint b{color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
 .toast.show{opacity:1}
+.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff}
+.btn.small{font-size:13px;padding:4px 9px}
+.btn:disabled{opacity:.5;cursor:default}
+.icon-btn{margin-left:auto;font:inherit;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:6px;font-size:15px;line-height:1}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.top{width:100%}
+.tag-score{font-size:11px;font-weight:600;background:var(--warn-bg);color:var(--warn);padding:2px 7px;border-radius:99px}
+.score{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13.5px}
+.score input{width:54px;text-align:center}
+.score .res{font-weight:700}
+.score .win{color:var(--ok)} .score .loss{color:var(--bad)} .score .draw{color:var(--muted)}
+.card.past.scored{opacity:.75}
+input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.form-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.form-row label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.form-row label.grow{flex:1;min-width:140px}
+.rows{list-style:none;margin:12px 0 0;padding:0}
+.rows li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.rows li .sub2{color:var(--muted);font-size:12.5px}
+.rows li .grow{flex:1;min-width:0}
+.rows li.off .grow{opacity:.55}
+.pill{font-size:11.5px;padding:2px 7px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--surface);color:var(--ink);width:min(440px,calc(100% - 32px));box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,20,30,.45)}
+dialog form{padding:18px;display:grid;gap:12px}
+dialog h3{margin:0;font-size:18px}
+dialog .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+dialog label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+dialog .actions{display:flex;gap:8px;align-items:center;margin-top:4px}
+dialog .actions .spacer{flex:1}
 @media (max-width:560px){
   header{flex-wrap:wrap}
   .sync{margin-left:0;width:100%}
@@ -131,11 +168,11 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <div class="sync" id="maj"></div>
   </header>
 
-
   <div class="toolbar">
     <label for="me">Je suis</label>
     <select id="me"><option value="">—</option></select>
     <span class="spacer"></span>
+    <button type="button" class="btn primary" id="addMatch">+ Match</button>
     <div class="seg" role="group" aria-label="Filtre">
       <button type="button" data-f="upcoming" aria-pressed="true">À venir</button>
       <button type="button" data-f="all" aria-pressed="false">Tous</button>
@@ -146,8 +183,27 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   <main id="list"></main>
 
-  <h2>Présences confirmées (matchs à venir)</h2>
-  <div class="tablewrap"><table id="stats"></table></div>
+  <h2>Vacances</h2>
+  <div class="panel">
+    <p id="vacHint"></p>
+    <form class="form-row" id="vacForm">
+      <label>Du<input type="date" name="debut" required></label>
+      <label>Au<input type="date" name="fin" required></label>
+      <label class="grow">Commentaire<input type="text" name="commentaire" maxlength="80" placeholder="facultatif"></label>
+      <button class="btn primary" type="submit">Ajouter</button>
+    </form>
+    <ul class="rows" id="vacList"></ul>
+  </div>
+
+  <h2>Équipe</h2>
+  <div class="panel">
+    <form class="form-row" id="playerForm">
+      <label class="grow">Nouveau joueur<input type="text" name="nom" maxlength="30" required placeholder="Prénom"></label>
+      <label>Poste<select name="poste"><option value="">—</option><option>Skip</option><option>Troisième</option><option>Second</option><option>Premier</option><option>Remplaçant</option></select></label>
+      <button class="btn primary" type="submit">Ajouter</button>
+    </form>
+    <ul class="rows" id="teamList"></ul>
+  </div>
 
   <h2>Légende</h2>
   <div class="legend">
@@ -160,6 +216,28 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   <footer id="foot">StoneTroopers</footer>
 </div>
+
+<dialog id="dlg">
+  <form method="dialog" id="matchForm">
+    <h3 id="dlgTitle">Nouveau match</h3>
+    <div class="grid2">
+      <label>Date<input type="date" name="date" required></label>
+      <label>Heure<input type="time" name="heure" value="20:15"></label>
+    </div>
+    <div class="grid2">
+      <label>Piste<select name="piste"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+      <label>Adversaire<input type="text" name="adversaire" maxlength="40" required></label>
+    </div>
+    <label>Notes<input type="text" name="notes" maxlength="120" placeholder="facultatif"></label>
+    <div class="actions">
+      <button type="button" class="btn danger" id="delMatch">Supprimer</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="cancelDlg">Annuler</button>
+      <button type="submit" class="btn primary" id="saveMatch">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="data.js"></script>
 <script src="config.js"></script>
@@ -171,13 +249,12 @@ let PLAYERS = [];
 const API = ((window.STONETROOPERS_CONFIG||{}).API_URL||"").trim();
 const CYCLE = ["", "Oui", "Incertain", "Non"];
 
-
 const $ = s => document.querySelector(s);
 const store = {
   get(k,d){ try{ const v=localStorage.getItem("st_"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
   set(k,v){ try{ localStorage.setItem("st_"+k, JSON.stringify(v)); }catch(e){} }
 };
-let state = { matches:[], vacances:[] };
+let state = { matches:[], vacances:[], joueurs:[], capitaine:false };
 let filter = store.get("filter","upcoming");
 let me = store.get("me","");
 
@@ -190,14 +267,16 @@ function norm(v){
 }
 function parseDate(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
 function today(){ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); }
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 const fmtDay = new Intl.DateTimeFormat("fr-FR",{weekday:"short"});
 const fmtMon = new Intl.DateTimeFormat("fr-FR",{month:"short"});
 const fmtLong = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+const fmtShort = new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short"});
 
 function onVacation(player, dateStr){
-  const d = parseDate(dateStr);
-  return state.vacances.some(v => v.joueur===player && v.debut && v.fin && d>=parseDate(v.debut) && d<=parseDate(v.fin));
+  return state.vacances.some(v => v.joueur===player && v.debut && v.fin && dateStr>=v.debut && dateStr<=v.fin);
 }
+function hasScore(m){ return String(m.scoreNous)!=="" && String(m.scoreEux)!==""; }
 function status(m){
   const vals = PLAYERS.map(p=>m.dispo[p]||"");
   const yes = vals.filter(v=>v==="Oui").length;
@@ -215,15 +294,32 @@ function status(m){
 }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
+const editingScore = new Set();
+function scoreBlock(m){
+  if (hasScore(m) && !editingScore.has(m.id)){
+    const a=Number(m.scoreNous), b=Number(m.scoreEux);
+    const [cls,txt] = a>b?["win","Victoire"]:a<b?["loss","Défaite"]:["draw","Égalité"];
+    return `<div class="score"><span>Score :</span><span class="res ${cls}">${a} – ${b} · ${txt}</span>
+      <button type="button" class="btn small" data-act="editScore" data-id="${esc(m.id)}">Modifier</button></div>`;
+  }
+  return `<form class="score" data-act="score" data-id="${esc(m.id)}">
+      <span>Score :</span>
+      <input type="number" name="nous" min="0" max="99" inputmode="numeric" placeholder="Nous" aria-label="Score StoneTroopers" value="${esc(m.scoreNous)}">
+      <span>–</span>
+      <input type="number" name="eux" min="0" max="99" inputmode="numeric" placeholder="Eux" aria-label="Score adversaire" value="${esc(m.scoreEux)}">
+      <button type="submit" class="btn small primary">Enregistrer</button>
+    </form>`;
+}
+
 function render(){
-  const t = today();
+  const t = today(), tIso = iso(t);
   const sorted = [...state.matches].sort((a,b)=>a.date.localeCompare(b.date));
-  const nextM = sorted.find(m=>parseDate(m.date)>=t);
-  const shown = filter==="all" ? sorted : sorted.filter(m=>parseDate(m.date)>=t);
+  const nextM = sorted.find(m=>m.date>=tIso);
+  const shown = filter==="all" ? sorted : sorted.filter(m=>m.date>=tIso || !hasScore(m));
   const list = $("#list");
   if (!shown.length){ list.innerHTML = '<div class="empty">Aucun match à venir.</div>'; }
   else list.innerHTML = shown.map(m=>{
-    const d = parseDate(m.date), past = d<t, st = status(m), isNext = nextM===m;
+    const d = parseDate(m.date), past = m.date<tIso, played = m.date<=tIso, st = status(m), isNext = nextM===m;
     const chips = PLAYERS.map(p=>{
       const v = m.dispo[p]||"", vac = onVacation(p,m.date);
       const cls = ["chip","v-"+(v?v.toLowerCase():"vide"), vac?"vac":"", me===p?"me":""].join(" ");
@@ -234,37 +330,51 @@ function render(){
       return `<div class="${cls}" aria-label="${label}">${inner}</div>`;
     }).join("");
     const vacList = PLAYERS.filter(p=>onVacation(p,m.date));
-    return `<article class="card ${st.cls} ${past?"past":""} ${isNext?"next":""}">
+    return `<article class="card ${st.cls} ${past?"past":""} ${past&&hasScore(m)?"scored":""} ${isNext?"next":""}">
       <div class="datebox"><div class="d">${fmtDay.format(d)}</div><div class="n">${d.getDate()}</div><div class="m">${fmtMon.format(d)}</div></div>
       <div>
         <div class="top">
           <span class="opp">vs ${esc(m.adversaire)}</span>
           ${isNext?'<span class="tag-next">Prochain match</span>':""}
+          ${past&&!hasScore(m)?'<span class="tag-score">Score à saisir</span>':""}
+          <button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>
         </div>
-        <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}</div>
+        <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?" · "+esc(m.notes):""}</div>
         <div class="statusline">
           <span class="badge">${st.label}</span>
           <span class="counts">${st.yes} confirmé${st.yes>1?"s":""} · ${st.pot} potentiel${st.pot>1?"s":""}${vacList.length?" · En congé : "+vacList.map(esc).join(", "):""}</span>
         </div>
         <div class="players">${chips}</div>
+        ${played?scoreBlock(m):""}
       </div>
     </article>`;
   }).join("");
-
-  // Stats
-  const up = sorted.filter(m=>parseDate(m.date)>=t);
-  const rows = PLAYERS.map(p=>{
-    const y = up.filter(m=>m.dispo[p]==="Oui").length;
-    const u = up.filter(m=>m.dispo[p]==="Incertain").length;
-    const pct = up.length? Math.round(100*y/up.length):0;
-    return `<tr><td>${esc(p)}</td><td class="num">${y} / ${up.length}</td><td class="num">${u}</td><td><div class="bar"><i style="width:${pct}%"></i></div></td></tr>`;
-  }).join("");
-  $("#stats").innerHTML = `<thead><tr><th>Joueur</th><th style="text-align:right">Oui</th><th style="text-align:right">Incertain</th><th>Taux</th></tr></thead><tbody>${rows}</tbody>`;
 
   document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.f===filter)));
   $("#hint").innerHTML = me
     ? `Clique sur tes cases <b>${esc(me)}</b> pour changer ta réponse : vide → Oui → Incertain → Non.`
     : `Choisis ton nom dans <b>Je suis</b> pour pouvoir modifier tes disponibilités.`;
+  renderVacances(); renderTeam();
+}
+
+function renderVacances(){
+  const tIso = iso(today());
+  $("#vacHint").innerHTML = me
+    ? `Ajoute une absence pour <b>${esc(me)}</b> : tes réponses passent à « Non » sur les matchs concernés.`
+    : `Choisis ton nom dans <b>Je suis</b> pour déclarer une absence.`;
+  $("#vacForm").querySelectorAll("input,button").forEach(el=>el.disabled=!me);
+  const vs = state.vacances.filter(v=>v.fin>=tIso).sort((a,b)=>a.debut.localeCompare(b.debut));
+  $("#vacList").innerHTML = vs.length ? vs.map(v=>`<li>
+      <span class="grow"><b>${esc(v.joueur)}</b> · du ${fmtShort.format(parseDate(v.debut))} au ${fmtShort.format(parseDate(v.fin))}${v.commentaire?` <span class="sub2">· ${esc(v.commentaire)}</span>`:""}</span>
+      <button type="button" class="btn small" data-act="delVac" data-id="${esc(v.id)}">Retirer</button></li>`).join("")
+    : `<li><span class="sub2">Aucune absence prévue.</span></li>`;
+}
+
+function renderTeam(){
+  const js = state.joueurs.length ? state.joueurs : PLAYERS.map(n=>({nom:n,actif:true,poste:""}));
+  $("#teamList").innerHTML = js.map(j=>`<li class="${j.actif===false?"off":""}">
+      <span class="grow"><b>${esc(j.nom)}</b>${j.poste?` <span class="pill">${esc(j.poste)}</span>`:""}${j.actif===false?` <span class="sub2">· retiré</span>`:""}</span>
+      <button type="button" class="btn small" data-act="togglePlayer" data-nom="${esc(j.nom)}">${j.actif===false?"Réintégrer":"Retirer"}</button></li>`).join("");
 }
 
 let toastT;
@@ -278,23 +388,44 @@ async function post(payload){
   if (!res.ok) throw new Error(res.error||"erreur");
   return res;
 }
+// Actions réservées au capitaine si un code est défini dans le script
+async function postCapitaine(payload){
+  if (state.capitaine){
+    let code = store.get("code","");
+    if (!code){ code = window.prompt("Code capitaine :","") || ""; if (!code) throw new Error("code capitaine requis"); }
+    payload.code = code;
+    try{ const r = await post(payload); store.set("code",code); return r; }
+    catch(e){ if (/code capitaine/.test(e.message)) store.set("code",""); throw e; }
+  }
+  return post(payload);
+}
 
 let busy = 0;
-async function refresh(){
-  if (!API || busy) return;
+async function refresh(force){
+  if (!API || (busy && !force)) return;
   try{
     const r = await fetch(API + (API.includes("?")?"&":"?") + "t=" + Date.now(), {cache:"no-store"});
     const data = await r.json();
     if (data.error) throw new Error(data.error);
-    if (busy) return;
+    if (busy && !force) return;
     applyData(data);
     $("#maj").textContent = "À jour · " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
     render();
   }catch(e){ $("#maj").textContent = "Hors ligne — dernières données connues"; }
 }
+// Lance une action d'écriture : bouton désactivé pendant l'envoi, puis rechargement
+async function run(btn, fn, okMsg){
+  if (btn) btn.disabled = true;
+  busy++;
+  try{ await fn(); busy--; await refresh(true); if (okMsg) toast(okMsg); return true; }
+  catch(err){ busy--; toast("Pas enregistré : "+err.message); return false; }
+  finally{ if (btn) btn.disabled = false; }
+}
 
 function applyData(data){
-  const js = (data.joueurs||[]).filter(j=>j.actif!==false).map(j=>j.nom);
+  state.joueurs = data.joueurs||[];
+  state.capitaine = !!data.capitaine;
+  const js = state.joueurs.filter(j=>j.actif!==false).map(j=>j.nom);
   if (js.join("|")!==PLAYERS.join("|")){ PLAYERS = js; fillMe(); }
   state.matches = (data.matches||[]).map(m=>({...m, dispo:Object.fromEntries(PLAYERS.map(p=>[p,norm((m.dispo||{})[p])]))}));
   state.vacances = data.vacances||[];
@@ -306,9 +437,74 @@ function fillMe(){
   sel.value = me;
 }
 
+/* ---------- Fenêtre match ---------- */
+const dlg = $("#dlg"), mf = $("#matchForm");
+let editId = null;
+function openMatch(m){
+  editId = m ? m.id : null;
+  $("#dlgTitle").textContent = m ? "Modifier le match" : "Nouveau match";
+  mf.date.value = m ? m.date : "";
+  mf.heure.value = m ? m.heure : "20:15";
+  mf.piste.value = m ? (m.piste||"A") : "A";
+  mf.adversaire.value = m ? m.adversaire : "";
+  mf.notes.value = m ? (m.notes||"") : "";
+  const del = $("#delMatch");
+  del.hidden = !m; del.classList.remove("armed"); del.textContent = "Supprimer";
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open","");
+  mf.date.focus();
+}
+function closeMatch(){ if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); }
+$("#addMatch").addEventListener("click", ()=>openMatch(null));
+$("#cancelDlg").addEventListener("click", closeMatch);
+mf.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const match = { id: editId||undefined, date: mf.date.value, heure: mf.heure.value, piste: mf.piste.value,
+    adversaire: mf.adversaire.value.trim(), notes: mf.notes.value.trim() };
+  if (!match.date || !match.adversaire) return;
+  const ok = await run($("#saveMatch"), ()=>postCapitaine({action:"saveMatch", match}), editId?"Match modifié":"Match ajouté");
+  if (ok) closeMatch();
+});
+$("#delMatch").addEventListener("click", async e=>{
+  const b = e.currentTarget;
+  if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "Confirmer la suppression"; return; }
+  const ok = await run(b, ()=>postCapitaine({action:"deleteMatch", id: editId}), "Match supprimé");
+  if (ok) closeMatch();
+});
+
+/* ---------- Vacances et équipe ---------- */
+$("#vacForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const f = e.currentTarget;
+  if (!me) return;
+  if (f.fin.value < f.debut.value){ toast("La date de fin est avant la date de début"); return; }
+  const ok = await run(f.querySelector("button"), ()=>post({action:"addVacances", joueur:me, debut:f.debut.value, fin:f.fin.value, commentaire:f.commentaire.value.trim()}), "Absence ajoutée");
+  if (ok) f.reset();
+});
+$("#playerForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const f = e.currentTarget, nom = f.nom.value.trim();
+  if (!nom) return;
+  if (state.joueurs.some(j=>j.nom.toLowerCase()===nom.toLowerCase())){ toast("Ce joueur existe déjà"); return; }
+  const ok = await run(f.querySelector("button"), ()=>postCapitaine({action:"savePlayer", nom, poste:f.poste.value, actif:true}), nom+" ajouté à l'équipe");
+  if (ok) f.reset();
+});
+
 document.addEventListener("click", e=>{
   const seg = e.target.closest(".seg button");
   if (seg){ filter=seg.dataset.f; store.set("filter",filter); render(); return; }
+  const act = e.target.closest("[data-act]");
+  if (act && act.tagName==="BUTTON"){
+    const a = act.dataset.act;
+    if (a==="edit"){ openMatch(state.matches.find(m=>m.id===act.dataset.id)); return; }
+    if (a==="editScore"){ editingScore.add(act.dataset.id); render(); return; }
+    if (a==="delVac"){ run(act, ()=>post({action:"deleteVacances", id:act.dataset.id}), "Absence retirée"); return; }
+    if (a==="togglePlayer"){
+      const j = state.joueurs.find(x=>x.nom===act.dataset.nom); if (!j) return;
+      const actif = j.actif===false;
+      run(act, ()=>postCapitaine({action:"savePlayer", nom:j.nom, poste:j.poste||"", actif}), j.nom+(actif?" réintégré":" retiré de l'équipe"));
+      return;
+    }
+  }
   const chip = e.target.closest("button.chip");
   if (!chip) return;
   const id = chip.dataset.id, p = chip.dataset.p;
@@ -325,6 +521,17 @@ document.addEventListener("click", e=>{
     .finally(()=>{ busy--; });
 });
 
+document.addEventListener("submit", async e=>{
+  const f = e.target.closest('form[data-act="score"]');
+  if (!f) return;
+  e.preventDefault();
+  const nous = f.nous.value.trim(), eux = f.eux.value.trim();
+  if (nous==="" || eux===""){ toast("Indique les deux scores"); return; }
+  const id = f.dataset.id;
+  const ok = await run(f.querySelector("button"), ()=>post({action:"setScore", id, scoreNous:nous, scoreEux:eux}), "Score enregistré");
+  if (ok){ editingScore.delete(id); render(); }
+});
+
 const sel = $("#me");
 sel.addEventListener("change", ()=>{ me=sel.value; store.set("me",me); render(); });
 
@@ -334,8 +541,9 @@ $("#maj").textContent = API ? "Chargement…" : "Lecture seule";
 render();
 if (API){
   refresh();
-  setInterval(()=>{ if(!document.hidden) refresh(); }, 60000);
-  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) refresh(); });
+  const typing = ()=>{ const a=document.activeElement; return a && a.closest && a.closest("#list form"); };
+  setInterval(()=>{ if(!document.hidden && !dlg.open && !typing()) refresh(); }, 60000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && !(dlg.open)) refresh(); });
 }
 })();
 </script>
