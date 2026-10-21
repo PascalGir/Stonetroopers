@@ -183,6 +183,8 @@ dialog .actions .spacer{flex:1}
 
   <main id="list"></main>
 
+  <!-- Sections masquées par défaut : pour les réafficher, mettre true dans config.js -->
+  <section id="secVacances" hidden>
   <h2>Vacances</h2>
   <div class="panel">
     <p id="vacHint"></p>
@@ -194,7 +196,9 @@ dialog .actions .spacer{flex:1}
     </form>
     <ul class="rows" id="vacList"></ul>
   </div>
+  </section>
 
+  <section id="secEquipe" hidden>
   <h2>Équipe</h2>
   <div class="panel">
     <form class="form-row" id="playerForm">
@@ -204,6 +208,7 @@ dialog .actions .spacer{flex:1}
     </form>
     <ul class="rows" id="teamList"></ul>
   </div>
+  </section>
 
   <h2>Légende</h2>
   <div class="legend">
@@ -250,6 +255,9 @@ const API = ((window.STONETROOPERS_CONFIG||{}).API_URL||"").trim();
 const CYCLE = ["", "Oui", "Incertain", "Non"];
 
 const $ = s => document.querySelector(s);
+const CFG = window.STONETROOPERS_CONFIG || {};
+$("#secVacances").hidden = CFG.AFFICHER_VACANCES !== true;
+$("#secEquipe").hidden = CFG.AFFICHER_EQUIPE !== true;
 const store = {
   get(k,d){ try{ const v=localStorage.getItem("st_"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
   set(k,v){ try{ localStorage.setItem("st_"+k, JSON.stringify(v)); }catch(e){} }
