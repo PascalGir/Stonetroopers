@@ -19,6 +19,7 @@ const ONGLET_JOUEURS = 'Joueurs';
 const ONGLET_VACANCES = 'Vacances';
 const COLS_MATCH = ['ID', 'Date', 'Heure', 'Piste', 'Adversaire', 'Score nous', 'Score eux', 'Notes'];
 const REPONSES = ['', 'Oui', 'Incertain', 'Non'];
+const COLS_COMPO = ['Lanceur 1', 'Lanceur 2', 'Lanceur 3', 'Lanceur 4', 'Skip'];
 
 /* ---------- Lecture ---------- */
 
@@ -60,6 +61,8 @@ function lireTout_() {
         scoreNous: d['Score nous'] || '',
         scoreEux: d['Score eux'] || '',
         notes: String(o['Notes'] || ''),
+        lanceurs: [1, 2, 3, 4].map(function (k) { return String(o['Lanceur ' + k] || '').trim(); }),
+        skip: String(o['Skip'] || '').trim(),
         dispo: dispo
       });
     });
@@ -105,6 +108,7 @@ function action_(b) {
     case 'saveMatch': capitaine_(b); return saveMatch_(b);
     case 'deleteMatch': capitaine_(b); return deleteMatch_(b);
     case 'savePlayer': capitaine_(b); return savePlayer_(b);
+    case 'setCompo': capitaine_(b); return setCompo_(b);
     default: throw new Error('action inconnue');
   }
 }
@@ -183,6 +187,37 @@ function addVacances_(b) {
     });
   }
   return { id: id, matchs: n };
+}
+
+// Composition d'un match joué : ordre de lancer (3 ou 4 joueurs) et skip
+function setCompo_(b) {
+  const l = (b.lanceurs || []).map(function (x) { return String(x || '').trim(); }).slice(0, 4);
+  while (l.length < 4) l.push('');
+  const pris = l.filter(function (x) { return x; });
+  const joueurs = lignes_(ONGLET_JOUEURS).map(function (o) { return String(o['Nom']).trim(); });
+  if (pris.some(function (x) { return joueurs.indexOf(x) < 0; })) throw new Error('joueur inconnu');
+  if (new Set(pris).size !== pris.length) throw new Error('un joueur apparaît deux fois');
+  const skip = String(b.skip || '').trim();
+  if (pris.length && pris.indexOf(skip) < 0) throw new Error('le skip doit faire partie des lanceurs');
+  const sh = feuille_(ONGLET_MATCHS);
+  const h = colonnes_(sh, COLS_COMPO);
+  const row = ligneParId_(sh, b.id);
+  l.concat([pris.length ? skip : '']).forEach(function (v, i) {
+    sh.getRange(row, h.indexOf(COLS_COMPO[i]) + 1).setValue(v);
+  });
+}
+
+// Ajoute en fin de ligne d'en-tête les colonnes manquantes ; renvoie les en-têtes
+function colonnes_(sh, noms) {
+  const h = entetes_(sh);
+  noms.forEach(function (n) {
+    if (h.indexOf(n) < 0) {
+      sh.getRange(1, h.length + 1).setValue(n)
+        .setFontWeight('bold').setFontColor('#ffffff').setBackground('#6b7680').setHorizontalAlignment('center');
+      h.push(n);
+    }
+  });
+  return h;
 }
 
 function setScore_(b) {
