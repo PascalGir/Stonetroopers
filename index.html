@@ -380,7 +380,8 @@ function render(){
   const t = today(), tIso = iso(t);
   const sorted = [...state.matches].sort((a,b)=>a.date.localeCompare(b.date));
   const nextM = sorted.find(m=>m.date>=tIso);
-  const shown = filter==="all" ? sorted : sorted.filter(m=>m.date>=tIso || !hasScore(m));
+  // « À venir » garde aussi les matchs passés à compléter (score manquant, ou composition manquante pour un éditeur)
+  const shown = filter==="all" ? sorted : sorted.filter(m=>m.date>=tIso || !hasScore(m) || (canEdit() && !hasCompo(m)));
   const list = $("#list");
   if (!shown.length){ list.innerHTML = '<div class="empty">Aucun match à venir.</div>'; }
   else list.innerHTML = shown.map(m=>{
