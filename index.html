@@ -224,7 +224,7 @@ dialog .actions .spacer{flex:1}
     <div><span class="badge" style="background:var(--plus-bg);color:var(--plus)">➕ Surplus</span>les 5 ont confirmé : il faudra tourner</div>
   </div>
 
-  <section id="secStats">
+  <section id="secStats" hidden>
   <h2>Statistiques</h2>
   <div class="panel" id="stats"></div>
   </section>
@@ -268,7 +268,9 @@ const $ = s => document.querySelector(s);
 const CFG = window.STONETROOPERS_CONFIG || {};
 $("#secVacances").hidden = CFG.AFFICHER_VACANCES !== true;
 $("#secEquipe").hidden = CFG.AFFICHER_EQUIPE !== true;
-$("#secStats").hidden = CFG.AFFICHER_STATS === false;
+// Composition proposée par défaut (modifiable dans config.js)
+const COMPO_HAB = Array.isArray(CFG.COMPO_HABITUELLE) ? CFG.COMPO_HABITUELLE : [];
+const SKIP_HAB = CFG.SKIP_HABITUEL || "";
 // Joueurs autorisés à ajouter / modifier / supprimer des matchs (liste dans config.js)
 const EDITEURS = Array.isArray(CFG.EDITEURS) ? CFG.EDITEURS : ["Pascal"];
 const canEdit = () => !!me && EDITEURS.includes(me);
@@ -318,6 +320,16 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;"
 
 const editingScore = new Set(), editingCompo = new Set();
 function hasCompo(m){ return (m.lanceurs||[]).some(x=>x); }
+// Proposition : ordre habituel parmi les « Oui », les autres « Oui » (ex. remplaçant) prennent les places libres
+function proposeCompo(m){
+  const oui = PLAYERS.filter(p=>m.dispo[p]==="Oui");
+  const slots = [0,1,2,3].map(i=>oui.includes(COMPO_HAB[i]) ? COMPO_HAB[i] : "");
+  const autres = oui.filter(p=>!slots.includes(p));
+  for (let i=0; i<4 && autres.length; i++) if (!slots[i]) slots[i] = autres.shift();
+  const l = slots.filter(Boolean);
+  while (l.length < 4) l.push("");
+  return l;
+}
 // Composition (ordre de lancer + skip) : visible par tous, modifiable par les éditeurs (config.js)
 function compoBlock(m){
   const L = (m.lanceurs||[]).slice(0,4); while (L.length<4) L.push("");
@@ -329,8 +341,8 @@ function compoBlock(m){
   const oui = PLAYERS.filter(p=>m.dispo[p]==="Oui"), autres = PLAYERS.filter(p=>m.dispo[p]!=="Oui");
   const noms = [...oui, ...autres, ...L.filter(p=>p && !PLAYERS.includes(p))];
   const opts = v => '<option value="">—</option>' + noms.map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("");
-  const def = hasCompo(m) ? L : [...oui, "", "", "", ""].slice(0,4);
-  const skip = m.skip || [...def].reverse().find(x=>x) || "";
+  const def = hasCompo(m) ? L : proposeCompo(m);
+  const skip = m.skip || (def.includes(SKIP_HAB) ? SKIP_HAB : [...def].reverse().find(x=>x)) || "";
   return `<form class="compo" data-act="compo" data-id="${esc(m.id)}">
       <span>Composition :</span>
       ${def.map((p,i)=>`<label>${i+1}<select name="l${i+1}" aria-label="Lanceur ${i+1}">${opts(p)}</select></label>`).join("")}
@@ -422,6 +434,7 @@ function render(){
     ? `Clique sur tes cases <b>${esc(me)}</b> pour changer ta réponse : vide → Oui → Incertain → Non.`
     : `Choisis ton nom dans <b>Je suis</b> pour pouvoir modifier tes disponibilités.`;
   renderVacances(); renderTeam(); renderStats();
+  $("#secStats").hidden = CFG.AFFICHER_STATS === false || !canEdit();
 }
 
 function renderVacances(){
