@@ -271,6 +271,7 @@ $("#secEquipe").hidden = CFG.AFFICHER_EQUIPE !== true;
 // Composition proposée par défaut (modifiable dans config.js)
 const COMPO_HAB = Array.isArray(CFG.COMPO_HABITUELLE) ? CFG.COMPO_HABITUELLE : [];
 const SKIP_HAB = CFG.SKIP_HABITUEL || "";
+const COMPO_ABS = CFG.COMPO_SI_ABSENT || {};
 // Joueurs autorisés à ajouter / modifier / supprimer des matchs (liste dans config.js)
 const EDITEURS = Array.isArray(CFG.EDITEURS) ? CFG.EDITEURS : ["Pascal"];
 const canEdit = () => !!me && EDITEURS.includes(me);
@@ -321,14 +322,19 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;"
 const editingScore = new Set(), editingCompo = new Set();
 function hasCompo(m){ return (m.lanceurs||[]).some(x=>x); }
 // Proposition : ordre habituel parmi les « Oui », les autres « Oui » (ex. remplaçant) prennent les places libres
+// Si un joueur prévu dans COMPO_SI_ABSENT est absent, on part de la formation de remplacement
 function proposeCompo(m){
   const oui = PLAYERS.filter(p=>m.dispo[p]==="Oui");
-  const slots = [0,1,2,3].map(i=>oui.includes(COMPO_HAB[i]) ? COMPO_HAB[i] : "");
+  const absent = Object.keys(COMPO_ABS).find(p=>!oui.includes(p));
+  const base = absent ? (COMPO_ABS[absent].ordre||[]) : COMPO_HAB;
+  const skipVoulu = absent ? (COMPO_ABS[absent].skip||"") : SKIP_HAB;
+  const slots = [0,1,2,3].map(i=>oui.includes(base[i]) ? base[i] : "");
   const autres = oui.filter(p=>!slots.includes(p));
   for (let i=0; i<4 && autres.length; i++) if (!slots[i]) slots[i] = autres.shift();
   const l = slots.filter(Boolean);
   while (l.length < 4) l.push("");
-  return l;
+  const skip = l.includes(skipVoulu) ? skipVoulu : ([...l].reverse().find(x=>x) || "");
+  return {l, skip};
 }
 // Composition (ordre de lancer + skip) : visible par tous, modifiable par les éditeurs (config.js)
 function compoBlock(m){
@@ -341,8 +347,9 @@ function compoBlock(m){
   const oui = PLAYERS.filter(p=>m.dispo[p]==="Oui"), autres = PLAYERS.filter(p=>m.dispo[p]!=="Oui");
   const noms = [...oui, ...autres, ...L.filter(p=>p && !PLAYERS.includes(p))];
   const opts = v => '<option value="">—</option>' + noms.map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("");
-  const def = hasCompo(m) ? L : proposeCompo(m);
-  const skip = m.skip || (def.includes(SKIP_HAB) ? SKIP_HAB : [...def].reverse().find(x=>x)) || "";
+  const prop = hasCompo(m) ? null : proposeCompo(m);
+  const def = prop ? prop.l : L;
+  const skip = prop ? prop.skip : (m.skip || "");
   return `<form class="compo" data-act="compo" data-id="${esc(m.id)}">
       <span>Composition :</span>
       ${def.map((p,i)=>`<label>${i+1}<select name="l${i+1}" aria-label="Lanceur ${i+1}">${opts(p)}</select></label>`).join("")}
