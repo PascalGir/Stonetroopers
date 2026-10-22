@@ -10,5 +10,9 @@ window.STONETROOPERS_CONFIG = {
   EDITEURS: ["Pascal"],
   // Composition proposée par défaut sur un match terminé (ordre 1 → 4) et skip habituel
   COMPO_HABITUELLE: ["Suettania", "Pascal", "Océane", "Adélie"],
-  SKIP_HABITUEL: "Suettania"
+  SKIP_HABITUEL: "Suettania",
+  // Formation de remplacement quand un joueur est absent ("" = place libre pour un autre joueur présent)
+  COMPO_SI_ABSENT: {
+    "Suettania": { ordre: ["Pascal", "", "Océane", "Adélie"], skip: "Océane" }
+  }
 };
