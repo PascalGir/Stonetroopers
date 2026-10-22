@@ -384,8 +384,10 @@ function scoreBlock(m){
     const a=Number(m.scoreNous), b=Number(m.scoreEux);
     const [cls,txt] = a>b?["win","Victoire"]:a<b?["loss","Défaite"]:["draw","Égalité"];
     return `<div class="score"><span>Score :</span><span class="res ${cls}">${a} – ${b} · ${txt}</span>
-      <button type="button" class="btn small" data-act="editScore" data-id="${esc(m.id)}">Modifier</button></div>`;
+      ${canEdit()?`<button type="button" class="btn small" data-act="editScore" data-id="${esc(m.id)}">Modifier</button>`:""}</div>`;
   }
+  // Saisie du score réservée aux éditeurs (config.js)
+  if (!canEdit()) return "";
   return `<form class="score" data-act="score" data-id="${esc(m.id)}">
       <span>Score :</span>
       <input type="number" name="nous" min="0" max="99" inputmode="numeric" placeholder="Nous" aria-label="Score StoneTroopers" value="${esc(m.scoreNous)}">
@@ -400,7 +402,7 @@ function render(){
   const sorted = [...state.matches].sort((a,b)=>a.date.localeCompare(b.date));
   const nextM = sorted.find(m=>m.date>=tIso);
   // « À venir » garde aussi les matchs passés à compléter (score manquant, ou composition manquante pour un éditeur)
-  const shown = filter==="all" ? sorted : sorted.filter(m=>m.date>=tIso || !hasScore(m) || (canEdit() && !hasCompo(m)));
+  const shown = filter==="all" ? sorted : sorted.filter(m=>m.date>=tIso || (canEdit() && (!hasScore(m) || !hasCompo(m))));
   const list = $("#list");
   if (!shown.length){ list.innerHTML = '<div class="empty">Aucun match à venir.</div>'; }
   else list.innerHTML = shown.map(m=>{
@@ -421,7 +423,7 @@ function render(){
         <div class="top">
           <span class="opp">vs ${esc(m.adversaire)}</span>
           ${isNext?'<span class="tag-next">Prochain match</span>':""}
-          ${past&&!hasScore(m)?'<span class="tag-score">Score à saisir</span>':""}
+          ${past&&!hasScore(m)&&canEdit()?'<span class="tag-score">Score à saisir</span>':""}
           ${canEdit()?`<button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>`:""}
         </div>
         <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?" · "+esc(m.notes):""}</div>
@@ -630,7 +632,7 @@ document.addEventListener("submit", async e=>{
   const nous = f.nous.value.trim(), eux = f.eux.value.trim();
   if (nous==="" || eux===""){ toast("Indique les deux scores"); return; }
   const id = f.dataset.id;
-  const ok = await run(f.querySelector("button"), ()=>post({action:"setScore", id, scoreNous:nous, scoreEux:eux}), "Score enregistré");
+  const ok = await run(f.querySelector("button"), ()=>postCapitaine({action:"setScore", id, scoreNous:nous, scoreEux:eux}), "Score enregistré");
   if (ok){ editingScore.delete(id); render(); }
 });
 
