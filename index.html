@@ -117,7 +117,13 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
 .top{width:100%}
 .tag-score{font-size:11px;font-weight:600;background:var(--warn-bg);color:var(--warn);padding:2px 7px;border-radius:99px}
-.score{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13.5px}
+.score,.compo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13.5px}
+.compo{margin-top:0;border-top:0;padding-top:8px}
+.compo label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.compo select{padding:5px 6px;max-width:130px}
+.compo .res{font-weight:600}
+.stats-sum{font-size:14px;margin:0 0 10px}
+.stats-sum b{font-size:16px}
 .score input{width:54px;text-align:center}
 .score .res{font-weight:700}
 .score .win{color:var(--ok)} .score .loss{color:var(--bad)} .score .draw{color:var(--muted)}
@@ -218,6 +224,11 @@ dialog .actions .spacer{flex:1}
     <div><span class="badge" style="background:var(--plus-bg);color:var(--plus)">➕ Surplus</span>les 5 ont confirmé : il faudra tourner</div>
   </div>
 
+  <section id="secStats">
+  <h2>Statistiques</h2>
+  <div class="panel" id="stats"></div>
+  </section>
+
   <footer id="foot">StoneTroopers</footer>
 </div>
 
@@ -257,6 +268,7 @@ const $ = s => document.querySelector(s);
 const CFG = window.STONETROOPERS_CONFIG || {};
 $("#secVacances").hidden = CFG.AFFICHER_VACANCES !== true;
 $("#secEquipe").hidden = CFG.AFFICHER_EQUIPE !== true;
+$("#secStats").hidden = CFG.AFFICHER_STATS === false;
 // Joueurs autorisés à ajouter / modifier / supprimer des matchs (liste dans config.js)
 const EDITEURS = Array.isArray(CFG.EDITEURS) ? CFG.EDITEURS : ["Pascal"];
 const canEdit = () => !!me && EDITEURS.includes(me);
@@ -304,7 +316,50 @@ function status(m){
 }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-const editingScore = new Set();
+const editingScore = new Set(), editingCompo = new Set();
+function hasCompo(m){ return (m.lanceurs||[]).some(x=>x); }
+// Composition (ordre de lancer + skip) : visible par tous, modifiable par les éditeurs (config.js)
+function compoBlock(m){
+  const L = (m.lanceurs||[]).slice(0,4); while (L.length<4) L.push("");
+  if (hasCompo(m) && !editingCompo.has(m.id)){
+    const txt = L.map((p,i)=>p?`${i+1} ${esc(p)}${p===m.skip?" ©":""}`:"").filter(Boolean).join(" · ");
+    return `<div class="compo"><span>Composition :</span><span class="res">${txt}</span>${canEdit()?`<button type="button" class="btn small" data-act="editCompo" data-id="${esc(m.id)}">Modifier</button>`:""}</div>`;
+  }
+  if (!canEdit()) return "";
+  const oui = PLAYERS.filter(p=>m.dispo[p]==="Oui"), autres = PLAYERS.filter(p=>m.dispo[p]!=="Oui");
+  const noms = [...oui, ...autres, ...L.filter(p=>p && !PLAYERS.includes(p))];
+  const opts = v => '<option value="">—</option>' + noms.map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("");
+  const def = hasCompo(m) ? L : [...oui, "", "", "", ""].slice(0,4);
+  const skip = m.skip || [...def].reverse().find(x=>x) || "";
+  return `<form class="compo" data-act="compo" data-id="${esc(m.id)}">
+      <span>Composition :</span>
+      ${def.map((p,i)=>`<label>${i+1}<select name="l${i+1}" aria-label="Lanceur ${i+1}">${opts(p)}</select></label>`).join("")}
+      <label>Skip<select name="skip" aria-label="Skip">${opts(skip)}</select></label>
+      <button type="submit" class="btn small primary">Enregistrer</button>
+    </form>`;
+}
+
+// Statistiques simples, calculées à partir des scores et compositions saisis
+function renderStats(){
+  const joues = state.matches.filter(hasScore);
+  const res = m => Math.sign(Number(m.scoreNous) - Number(m.scoreEux));
+  const v = joues.filter(m=>res(m)>0).length, d = joues.filter(m=>res(m)<0).length, n = joues.length - v - d;
+  let html = `<p class="stats-sum"><b>${joues.length}</b> match${joues.length>1?"s":""} joué${joues.length>1?"s":""} · <b>${v}</b> victoire${v>1?"s":""} · <b>${d}</b> défaite${d>1?"s":""}${n?` · <b>${n}</b> nul${n>1?"s":""}`:""}</p>`;
+  const avecCompo = state.matches.filter(hasCompo);
+  if (!avecCompo.length){
+    html += `<p>Les statistiques par joueur apparaîtront dès qu'une composition sera saisie sur un match terminé.</p>`;
+  } else {
+    const noms = [...PLAYERS]; avecCompo.forEach(m=>m.lanceurs.forEach(p=>{ if (p && !noms.includes(p)) noms.push(p); }));
+    const rows = noms.map(p=>{
+      const ms = avecCompo.filter(m=>m.lanceurs.includes(p));
+      const vic = ms.filter(m=>hasScore(m) && res(m)>0).length;
+      const sk = ms.filter(m=>m.skip===p).length;
+      return `<tr><td>${esc(p)}</td><td class="num">${ms.length}</td><td class="num">${sk}</td><td class="num">${vic}</td></tr>`;
+    }).join("");
+    html += `<div class="tablewrap"><table><thead><tr><th>Joueur</th><th style="text-align:right">Matchs joués</th><th style="text-align:right">Skip</th><th style="text-align:right">Victoires</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  $("#stats").innerHTML = html;
+}
 function scoreBlock(m){
   if (hasScore(m) && !editingScore.has(m.id)){
     const a=Number(m.scoreNous), b=Number(m.scoreEux);
@@ -355,7 +410,7 @@ function render(){
           <span class="counts">${st.yes} confirmé${st.yes>1?"s":""} · ${st.pot} potentiel${st.pot>1?"s":""}${vacList.length?" · En congé : "+vacList.map(esc).join(", "):""}</span>
         </div>
         <div class="players">${chips}</div>
-        ${played?scoreBlock(m):""}
+        ${played?scoreBlock(m)+compoBlock(m):""}
       </div>
     </article>`;
   }).join("");
@@ -365,7 +420,7 @@ function render(){
   $("#hint").innerHTML = me
     ? `Clique sur tes cases <b>${esc(me)}</b> pour changer ta réponse : vide → Oui → Incertain → Non.`
     : `Choisis ton nom dans <b>Je suis</b> pour pouvoir modifier tes disponibilités.`;
-  renderVacances(); renderTeam();
+  renderVacances(); renderTeam(); renderStats();
 }
 
 function renderVacances(){
@@ -509,6 +564,7 @@ document.addEventListener("click", e=>{
     const a = act.dataset.act;
     if (a==="edit"){ openMatch(state.matches.find(m=>m.id===act.dataset.id)); return; }
     if (a==="editScore"){ editingScore.add(act.dataset.id); render(); return; }
+    if (a==="editCompo"){ editingCompo.add(act.dataset.id); render(); return; }
     if (a==="delVac"){ run(act, ()=>post({action:"deleteVacances", id:act.dataset.id}), "Absence retirée"); return; }
     if (a==="togglePlayer"){
       const j = state.joueurs.find(x=>x.nom===act.dataset.nom); if (!j) return;
@@ -534,6 +590,19 @@ document.addEventListener("click", e=>{
 });
 
 document.addEventListener("submit", async e=>{
+  const fc = e.target.closest('form[data-act="compo"]');
+  if (fc){
+    e.preventDefault();
+    const lanceurs = [1,2,3,4].map(k=>fc["l"+k].value);
+    const pris = lanceurs.filter(Boolean), skip = fc.skip.value;
+    if (pris.length < 3){ toast("Indique au moins 3 lanceurs"); return; }
+    if (new Set(pris).size !== pris.length){ toast("Un joueur apparaît deux fois"); return; }
+    if (!pris.includes(skip)){ toast("Le skip doit faire partie des lanceurs"); return; }
+    const id = fc.dataset.id;
+    const ok = await run(fc.querySelector("button"), ()=>postCapitaine({action:"setCompo", id, lanceurs, skip}), "Composition enregistrée");
+    if (ok){ editingCompo.delete(id); render(); }
+    return;
+  }
   const f = e.target.closest('form[data-act="score"]');
   if (!f) return;
   e.preventDefault();
