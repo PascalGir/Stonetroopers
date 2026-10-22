@@ -122,6 +122,8 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .compo label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
 .compo select{padding:5px 6px;max-width:130px}
 .compo .res{font-weight:600}
+.note{color:var(--ink);font-weight:600}
+.note.rouge{color:var(--house)}
 .stats-sum{font-size:14px;margin:0 0 10px}
 .stats-sum b{font-size:16px}
 .score input{width:54px;text-align:center}
@@ -243,7 +245,10 @@ dialog .actions .spacer{flex:1}
       <label>Piste<select name="piste"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
       <label>Adversaire<input type="text" name="adversaire" maxlength="40" required></label>
     </div>
-    <label>Notes<input type="text" name="notes" maxlength="120" placeholder="facultatif"></label>
+    <div class="grid2" style="grid-template-columns:1fr auto">
+      <label>Notes<input type="text" name="notes" maxlength="120" placeholder="facultatif"></label>
+      <label>Couleur<select name="notesCouleur"><option value="">Noir</option><option value="rouge">Rouge</option></select></label>
+    </div>
     <div class="actions">
       <button type="button" class="btn danger" id="delMatch">Supprimer</button>
       <span class="spacer"></span>
@@ -426,7 +431,7 @@ function render(){
           ${past&&!hasScore(m)&&canEdit()?'<span class="tag-score">Score à saisir</span>':""}
           ${canEdit()?`<button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>`:""}
         </div>
-        <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?" · "+esc(m.notes):""}</div>
+        <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?` · <span class="note${m.notesCouleur==="rouge"?" rouge":""}">${esc(m.notes)}</span>`:""}</div>
         <div class="statusline">
           <span class="badge">${st.label}</span>
           <span class="counts">${st.yes} confirmé${st.yes>1?"s":""} · ${st.pot} potentiel${st.pot>1?"s":""}${vacList.length?" · En congé : "+vacList.map(esc).join(", "):""}</span>
@@ -538,6 +543,7 @@ function openMatch(m){
   mf.piste.value = m ? (m.piste||"A") : "A";
   mf.adversaire.value = m ? m.adversaire : "";
   mf.notes.value = m ? (m.notes||"") : "";
+  mf.notesCouleur.value = m && m.notesCouleur==="rouge" ? "rouge" : "";
   const del = $("#delMatch");
   del.hidden = !m; del.classList.remove("armed"); del.textContent = "Supprimer";
   if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open","");
@@ -549,7 +555,7 @@ $("#cancelDlg").addEventListener("click", closeMatch);
 mf.addEventListener("submit", async e=>{
   e.preventDefault();
   const match = { id: editId||undefined, date: mf.date.value, heure: mf.heure.value, piste: mf.piste.value,
-    adversaire: mf.adversaire.value.trim(), notes: mf.notes.value.trim() };
+    adversaire: mf.adversaire.value.trim(), notes: mf.notes.value.trim(), notesCouleur: mf.notesCouleur.value };
   if (!match.date || !match.adversaire) return;
   const ok = await run($("#saveMatch"), ()=>postCapitaine({action:"saveMatch", match}), editId?"Match modifié":"Match ajouté");
   if (ok) closeMatch();
