@@ -5,7 +5,10 @@ window.STONETROOPERS_CONFIG = {
   // Sections de la page : true = affichée, false = masquée
   AFFICHER_VACANCES: false,
   AFFICHER_EQUIPE: false,
-  AFFICHER_STATS: true,
+  AFFICHER_STATS: true,        // visible seulement pour les EDITEURS
   // Joueurs qui voient les boutons « + Match », ✏️ et la saisie de composition quand ils sont choisis dans « Je suis »
-  EDITEURS: ["Pascal"]
+  EDITEURS: ["Pascal"],
+  // Composition proposée par défaut sur un match terminé (ordre 1 → 4) et skip habituel
+  COMPO_HABITUELLE: ["Suettania", "Pascal", "Océane", "Adélie"],
+  SKIP_HABITUEL: "Suettania"
 };
