@@ -5,6 +5,7 @@ window.STONETROOPERS_CONFIG = {
   // Sections de la page : true = affichée, false = masquée
   AFFICHER_VACANCES: false,
   AFFICHER_EQUIPE: false,
-  // Joueurs qui voient les boutons « + Match » et ✏️ quand ils sont choisis dans « Je suis »
+  AFFICHER_STATS: true,
+  // Joueurs qui voient les boutons « + Match », ✏️ et la saisie de composition quand ils sont choisis dans « Je suis »
   EDITEURS: ["Pascal"]
 };
