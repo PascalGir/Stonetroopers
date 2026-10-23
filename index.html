@@ -261,8 +261,8 @@ dialog .actions .spacer{flex:1}
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="data.js"></script>
-<script src="config.js"></script>
+<script src="data.js?v=3"></script>
+<script src="config.js?v=3"></script>
 
 <script>
 (function(){
@@ -536,7 +536,7 @@ function fillMe(){
 
 /* ---------- Export calendrier (.ics) ---------- */
 const ICS_DUREE = Number(CFG.DUREE_MATCH_MIN) > 0 ? Number(CFG.DUREE_MATCH_MIN) : 120;
-const ICS_LIEU = CFG.LIEU || "";
+const ICS_LIEU = CFG.LIEU || "Patinoire des Eaux-Minérales, Avenue Henry-Warnery 8, 1110 Morges";
 const ICS_TZ = [
   "BEGIN:VTIMEZONE","TZID:Europe/Zurich",
   "BEGIN:DAYLIGHT","TZOFFSETFROM:+0100","TZOFFSETTO:+0200","TZNAME:CEST","DTSTART:19700329T020000","RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU","END:DAYLIGHT",
