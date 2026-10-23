@@ -115,6 +115,7 @@ button.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn:disabled{opacity:.5;cursor:default}
 .icon-btn{margin-left:auto;font:inherit;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:6px;font-size:15px;line-height:1}
 .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.icon-btn + .icon-btn{margin-left:0}
 .top{width:100%}
 .tag-score{font-size:11px;font-weight:600;background:var(--warn-bg);color:var(--warn);padding:2px 7px;border-radius:99px}
 .score,.compo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13.5px}
@@ -180,6 +181,7 @@ dialog .actions .spacer{flex:1}
     <label for="me">Je suis</label>
     <select id="me"><option value="">—</option></select>
     <span class="spacer"></span>
+    <button type="button" class="btn" id="icsAll" title="Ajouter tous les matchs à ton calendrier (fichier .ics)">📅 Exporter tous les matchs</button>
     <button type="button" class="btn primary" id="addMatch" hidden>+ Match</button>
     <div class="seg" role="group" aria-label="Filtre">
       <button type="button" data-f="upcoming" aria-pressed="true">À venir</button>
@@ -429,6 +431,7 @@ function render(){
           <span class="opp">vs ${esc(m.adversaire)}</span>
           ${isNext?'<span class="tag-next">Prochain match</span>':""}
           ${past&&!hasScore(m)&&canEdit()?'<span class="tag-score">Score à saisir</span>':""}
+          <button type="button" class="icon-btn" data-act="ics" data-id="${esc(m.id)}" aria-label="Ajouter ce match à mon calendrier" title="Ajouter ce match à mon calendrier (.ics)">📅</button>
           ${canEdit()?`<button type="button" class="icon-btn" data-act="edit" data-id="${esc(m.id)}" aria-label="Modifier ce match" title="Modifier ce match">✏️</button>`:""}
         </div>
         <div class="meta">${fmtLong.format(d)} · ${esc(m.heure)} · Piste ${esc(m.piste)}${m.notes?` · <span class="note${m.notesCouleur==="rouge"?" rouge":""}">${esc(m.notes)}</span>`:""}</div>
@@ -531,6 +534,68 @@ function fillMe(){
   sel.value = me;
 }
 
+/* ---------- Export calendrier (.ics) ---------- */
+const ICS_DUREE = Number(CFG.DUREE_MATCH_MIN) > 0 ? Number(CFG.DUREE_MATCH_MIN) : 120;
+const ICS_LIEU = CFG.LIEU || "";
+const ICS_TZ = [
+  "BEGIN:VTIMEZONE","TZID:Europe/Zurich",
+  "BEGIN:DAYLIGHT","TZOFFSETFROM:+0100","TZOFFSETTO:+0200","TZNAME:CEST","DTSTART:19700329T020000","RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU","END:DAYLIGHT",
+  "BEGIN:STANDARD","TZOFFSETFROM:+0200","TZOFFSETTO:+0100","TZNAME:CET","DTSTART:19701025T030000","RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU","END:STANDARD",
+  "END:VTIMEZONE"];
+const icsEsc = s => String(s==null?"":s).replace(/\\/g,"\\\\").replace(/;/g,"\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+// Lignes de 75 octets max (norme iCalendar)
+function icsFold(line){
+  const out=[]; let cur="", n=0;
+  for (const ch of line){
+    const b = new TextEncoder().encode(ch).length;
+    if (n + b > (out.length?74:75)){ out.push(cur); cur=""; n=0; }
+    cur+=ch; n+=b;
+  }
+  out.push(cur);
+  return out.join("\r\n ");
+}
+const icsDate = d => iso(d).replace(/-/g,"");
+const icsStamp = () => new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+function icsEvent(m){
+  const d = parseDate(m.date);
+  const h = /^(\d{1,2})[:hH](\d{2})/.exec(String(m.heure||"").trim());
+  const ev = ["BEGIN:VEVENT", "UID:"+icsEsc(m.id)+"@stonetroopers", "DTSTAMP:"+icsStamp()];
+  if (h){
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +h[1], +h[2]);
+    const end = new Date(start.getTime() + ICS_DUREE*60000);
+    const hm = x => String(x.getHours()).padStart(2,"0")+String(x.getMinutes()).padStart(2,"0")+"00";
+    ev.push("DTSTART;TZID=Europe/Zurich:"+icsDate(start)+"T"+hm(start), "DTEND;TZID=Europe/Zurich:"+icsDate(end)+"T"+hm(end));
+  } else {
+    const next = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+    ev.push("DTSTART;VALUE=DATE:"+icsDate(d), "DTEND;VALUE=DATE:"+icsDate(next));
+  }
+  const desc = [m.piste?"Piste "+m.piste:"", m.notes||"", "Planning : "+location.href.split(/[?#]/)[0]].filter(Boolean).join("\n");
+  ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire), "DESCRIPTION:"+icsEsc(desc));
+  if (ICS_LIEU) ev.push("LOCATION:"+icsEsc(ICS_LIEU+(m.piste?" — Piste "+m.piste:"")));
+  ev.push("END:VEVENT");
+  return ev;
+}
+function icsBuild(ms){
+  const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//StoneTroopers//Planning//FR","CALSCALE:GREGORIAN","METHOD:PUBLISH",
+    "X-WR-CALNAME:StoneTroopers","X-WR-TIMEZONE:Europe/Zurich", ...ICS_TZ];
+  ms.forEach(m=>lines.push(...icsEvent(m)));
+  lines.push("END:VCALENDAR");
+  return lines.map(icsFold).join("\r\n")+"\r\n";
+}
+function icsDownload(ms, nom){
+  const blob = new Blob([icsBuild(ms)], {type:"text/calendar;charset=utf-8"});
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+const fileSafe = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"");
+$("#icsAll").addEventListener("click", ()=>{
+  const ms = [...state.matches].sort((a,b)=>a.date.localeCompare(b.date));
+  if (!ms.length){ toast("Aucun match à exporter"); return; }
+  icsDownload(ms, "StoneTroopers-matchs.ics");
+  toast(ms.length+" match"+(ms.length>1?"s":"")+" exporté"+(ms.length>1?"s":""));
+});
+
 /* ---------- Fenêtre match ---------- */
 const dlg = $("#dlg"), mf = $("#matchForm");
 let editId = null;
@@ -591,6 +656,7 @@ document.addEventListener("click", e=>{
   const act = e.target.closest("[data-act]");
   if (act && act.tagName==="BUTTON"){
     const a = act.dataset.act;
+    if (a==="ics"){ const m = state.matches.find(x=>x.id===act.dataset.id); if (m) icsDownload([m], "StoneTroopers-"+m.date+"-"+fileSafe(m.adversaire)+".ics"); return; }
     if (a==="edit"){ openMatch(state.matches.find(m=>m.id===act.dataset.id)); return; }
     if (a==="editScore"){ editingScore.add(act.dataset.id); render(); return; }
     if (a==="editCompo"){ editingCompo.add(act.dataset.id); render(); return; }

@@ -8,6 +8,9 @@ window.STONETROOPERS_CONFIG = {
   AFFICHER_STATS: true,        // visible seulement pour les EDITEURS
   // Joueurs qui voient les boutons « + Match », ✏️ et la saisie de composition quand ils sont choisis dans « Je suis »
   EDITEURS: ["Pascal"],
+  // Export calendrier (.ics) : durée d'un match en minutes, et lieu (facultatif, ex. "Patinoire de …")
+  DUREE_MATCH_MIN: 120,
+  LIEU: "",
   // Composition proposée par défaut sur un match terminé (ordre 1 → 4) et skip habituel
   COMPO_HABITUELLE: ["Suettania", "Pascal", "Océane", "Adélie"],
   SKIP_HABITUEL: "Suettania",
