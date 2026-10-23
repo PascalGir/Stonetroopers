@@ -569,9 +569,11 @@ function icsEvent(m){
     const next = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
     ev.push("DTSTART;VALUE=DATE:"+icsDate(d), "DTEND;VALUE=DATE:"+icsDate(next));
   }
-  const desc = [m.piste?"Piste "+m.piste:"", m.notes||"", "Planning : "+location.href.split(/[?#]/)[0]].filter(Boolean).join("\n");
-  ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire), "DESCRIPTION:"+icsEsc(desc));
-  if (ICS_LIEU) ev.push("LOCATION:"+icsEsc(ICS_LIEU+(m.piste?" — Piste "+m.piste:"")));
+  const desc = ["Hello les StoneTroopers,", "Jour de match !", "",
+    "Heure : "+(m.heure||"à confirmer"), "Piste : "+(m.piste||"à confirmer"), "Adversaire : "+m.adversaire,
+    "Planning : "+location.href.split(/[?#]/)[0], "", "Bonne pierre !"].join("\n");
+  ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire+(m.piste?" - Piste "+m.piste:"")), "DESCRIPTION:"+icsEsc(desc));
+  if (ICS_LIEU) ev.push("LOCATION:"+icsEsc(ICS_LIEU));
   ev.push("END:VEVENT");
   return ev;
 }

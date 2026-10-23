@@ -10,7 +10,7 @@ window.STONETROOPERS_CONFIG = {
   EDITEURS: ["Pascal"],
   // Export calendrier (.ics) : durée d'un match en minutes, et lieu (facultatif, ex. "Patinoire de …")
   DUREE_MATCH_MIN: 120,
-  LIEU: "",
+  LIEU: "Patinoire des Eaux-Minérales, Avenue Henry-Warnery 8, 1110 Morges",
   // Composition proposée par défaut sur un match terminé (ordre 1 → 4) et skip habituel
   COMPO_HABITUELLE: ["Suettania", "Pascal", "Océane", "Adélie"],
   SKIP_HABITUEL: "Suettania",
