@@ -261,8 +261,8 @@ dialog .actions .spacer{flex:1}
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="data.js?v=4"></script>
-<script src="config.js?v=4"></script>
+<script src="data.js?v=5"></script>
+<script src="config.js?v=5"></script>
 
 <script>
 (function(){
@@ -536,6 +536,8 @@ function fillMe(){
 
 /* ---------- Export calendrier (.ics) ---------- */
 const ICS_DUREE = Number(CFG.DUREE_MATCH_MIN) > 0 ? Number(CFG.DUREE_MATCH_MIN) : 120;
+// Rappels en minutes avant le match (modifiable dans config.js)
+const ICS_RAPPELS = Array.isArray(CFG.RAPPELS_MIN) ? CFG.RAPPELS_MIN : [1440, 120];
 const ICS_LIEU = CFG.LIEU || "Patinoire des Eaux-Minérales, Avenue Henry-Warnery 8, 1110 Morges";
 const ICS_TZ = [
   "BEGIN:VTIMEZONE","TZID:Europe/Zurich",
@@ -575,6 +577,10 @@ function icsEvent(m){
   ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire+(m.piste?" - Piste "+m.piste:"")));
   if (ICS_LIEU) ev.push("LOCATION:"+icsEsc(ICS_LIEU));
   ev.push("DESCRIPTION:"+icsEsc(desc));
+  ICS_RAPPELS.filter(n=>Number(n)>0).forEach(n=>{
+    const txt = n%1440===0 ? (n/1440)+" jour"+(n>1440?"s":"") : n%60===0 ? (n/60)+" h" : n+" min";
+    ev.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc("Match StoneTroopers vs "+m.adversaire+" dans "+txt),"TRIGGER:-"+(n%1440===0?"P"+(n/1440)+"D":n%60===0?"PT"+(n/60)+"H":"PT"+n+"M"),"END:VALARM");
+  });
   ev.push("END:VEVENT");
   return ev;
 }
