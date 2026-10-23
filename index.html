@@ -261,8 +261,8 @@ dialog .actions .spacer{flex:1}
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="data.js?v=3"></script>
-<script src="config.js?v=3"></script>
+<script src="data.js?v=4"></script>
+<script src="config.js?v=4"></script>
 
 <script>
 (function(){
@@ -571,9 +571,10 @@ function icsEvent(m){
   }
   const desc = ["Hello les StoneTroopers,", "Jour de match !", "",
     "Heure : "+(m.heure||"à confirmer"), "Piste : "+(m.piste||"à confirmer"), "Adversaire : "+m.adversaire,
-    "Planning : "+location.href.split(/[?#]/)[0], "", "Bonne pierre !"].join("\n");
-  ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire+(m.piste?" - Piste "+m.piste:"")), "DESCRIPTION:"+icsEsc(desc));
+    ...(ICS_LIEU?["Lieu : "+ICS_LIEU]:[]), "Planning : "+location.href.split(/[?#]/)[0], "", "Bonne pierre !"].join("\n");
+  ev.push("SUMMARY:"+icsEsc("🥌 StoneTroopers vs "+m.adversaire+(m.piste?" - Piste "+m.piste:"")));
   if (ICS_LIEU) ev.push("LOCATION:"+icsEsc(ICS_LIEU));
+  ev.push("DESCRIPTION:"+icsEsc(desc));
   ev.push("END:VEVENT");
   return ev;
 }
@@ -582,7 +583,8 @@ function icsBuild(ms){
     "X-WR-CALNAME:StoneTroopers","X-WR-TIMEZONE:Europe/Zurich", ...ICS_TZ];
   ms.forEach(m=>lines.push(...icsEvent(m)));
   lines.push("END:VCALENDAR");
-  return lines.map(icsFold).join("\r\n")+"\r\n";
+  // Le lieu n'est jamais replié sur plusieurs lignes : certaines versions d'Outlook l'ignorent sinon
+  return lines.map(l=>l.startsWith("LOCATION:")?l:icsFold(l)).join("\r\n")+"\r\n";
 }
 function icsDownload(ms, nom){
   const blob = new Blob([icsBuild(ms)], {type:"text/calendar;charset=utf-8"});
